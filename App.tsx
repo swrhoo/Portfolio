@@ -1,3 +1,4 @@
+import { supabase } from './services/supabaseClient'
 import React, { useState, useEffect, useMemo, useRef, useCallback, useLayoutEffect } from 'react';
 import { type Project } from './types';
 import { 
@@ -1500,86 +1501,50 @@ const App: React.FC = () => {
         }
     };
 
-    const handleSaveProject = (projectData: Omit<Project, 'id'>, id?: string) => {
-        if (id) {
-            setProjects(prev => prev.map(p => p.id === id ? { ...projectData, id } : p));
-        } else {
-            const newProject: Project = {
-                ...projectData,
-                id: `proj-${Date.now()}`
-            };
-            setProjects(prev => [newProject, ...prev]);
-        }
-        setIsProjectModalOpen(false);
-        setProjectToEdit(null);
-    };
+const handleSaveProject = async (projectData: Omit<Project, 'id'>, id?: string) => {
+  try {
+    if (id) {
+      // 🔹 Aggiorna un progetto esistente
+      const { error } = await supabase
+        .from('projects')
+        .update(projectData)
+        .eq('id', id);
 
-    const handleClientFilter = (client: string) => {
-        setActiveClient(client);
-        setIsAnalyticsView(false);
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    };
-    
-    const handleReferrerFilter = (referrer: string) => {
-        setActiveReferrer(referrer);
-        setIsAnalyticsView(false);
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    };
+      if (error) throw error;
+      alert('Progetto aggiornato con successo!');
+    } else {
+      // 🔹 Crea un nuovo progetto
+      const { error } = await supabase
+        .from('projects')
+        .insert([
+          {
+            ...projectData,
+          },
+        ]);
 
-    const handleAccountFilter = (account: string) => {
-        setActiveAccount(account);
-        setIsAnalyticsView(false);
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    };
+      if (error) throw error;
+      alert('Progetto aggiunto con successo!');
+    }
 
-    const handleYearFilter = (year: number) => {
-        setActiveYear(year);
-        setIsAnalyticsView(false);
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    };
+    // 🔹 Dopo il salvataggio, ricarica i progetti da Supabase
+    const { data: projects, error: fetchError } = await supabase
+      .from('projects')
+      .select('*')
+      .order('created_at', { ascending: false });
 
-    const handleSelectCategory = (category: string) => {
-        setActiveCategory(category);
-         if (isAnalyticsView) {
-            setIsAnalyticsView(false);
-        }
-        if (category === 'Tutti') {
-            setActiveClient(null);
-            setActiveAccount(null);
-            setActiveYear(null);
-            setActiveReferrer(null);
-        }
-    };
-    
-     const handleLoadMore = useCallback(() => {
-        setIsLoadingMore(true);
-        setTimeout(() => {
-            setDisplayLimit(prev => prev + 20);
-            setIsLoadingMore(false);
-        }, 1200); // Simulate network delay
-    }, []);
-    
-    const handleLogin = (success: boolean) => {
-        if (success) {
-            setIsAuthenticated(true);
-            sessionStorage.setItem('isAuthenticated', 'true');
-            setIsLoginModalOpen(false);
-        }
-    };
+    if (fetchError) throw fetchError;
 
-    const handleLogout = () => {
-        setIsAuthenticated(false);
-        setIsAnalyticsView(false);
-        sessionStorage.removeItem('isAuthenticated');
-    };
-    
-     const handleAuthAction = () => {
-        if (isAuthenticated) {
-            handleLogout();
-        } else {
-            setIsLoginModalOpen(true);
-        }
-    };
+    setProjects(projects || []);
+  } catch (error) {
+    console.error('Errore Supabase:', error);
+    alert('Errore nel salvataggio del progetto.');
+  } finally {
+    // 🔹 Chiudi il modal e resetta lo stato di editing
+    setIsProjectModalOpen(false);
+    setProjectToEdit(null);
+  }
+};
+
 
 
     const categories = useMemo(() => {
