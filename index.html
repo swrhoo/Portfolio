@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="it">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%96%A8%EF%B8%8F%3C/text%3E%3C/svg%3E" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Portfolio Progetti Grafici</title>
+    <script>
+      // Configure Tailwind CSS with a custom dark theme palette
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            colors: {
+              'dark-bg': '#141414',
+              'dark-card': '#1f1f1f',
+              'dark-ui': '#2a2a2a',
+              'dark-ui-hover': '#3c3c3c',
+              'dark-border': '#3c3c3c',
+            },
+          },
+        },
+      }
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f5f5f5;
+            color: #222222;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        .dark body {
+             background-color: #141414; /* slate-900 */
+             color: #e2e8f0; /* slate-200 */
+        }
+        
+        .project-card {
+            box-shadow: 0px 10px 30px -5px rgba(var(--glow-color, 107 114 128), 0.3);
+            border: 1px solid transparent; /* Default transparent border */
+            transition: border-color 0.3s ease; /* Smooth transition for the border color */
+        }
+
+        .project-card:hover {
+            box-shadow: 0px 10px 30px -5px rgba(var(--glow-color, 107 114 128), 0.3);
+        }
+
+        /* --- Definitive Dark Mode Fix --- */
+        .dark .project-card {
+            background-color: #1f1f1f;
+            border-color: #353535; /* Visible border in dark mode */
+        }
+        .dark .project-card:hover {
+             box-shadow: 0px 10px 30px -5px rgba(var(--glow-color, 107 114 128), 0.2);
+        }
+        .dark .project-card h3,
+        .dark .project-card .behance-link { /* Title & Behance Link */
+            color: #f2f3f3;
+        }
+        .dark .project-card .card-details { /* Details text */
+            color: #8e8e8f;
+        }
+        
+        /* --- HEADER BORDER FIX --- */
+        .header-sticky-container {
+            border-bottom: 1px solid #e5e7eb4d; /* Equivalent to border-gray-200/30 */
+        }
+        .dark .header-sticky-container {
+            border-bottom: none; /* Definitive removal */
+        }
+
+        /* --- Dark Mode Button Style Overrides --- */
+        /* Header buttons (Sort, Filter, Theme) */
+        .dark header .header-action-btn {
+            background-color: #141414 !important;
+            color: #f2f3f3 !important;
+            border-width: 2px !important;
+            border-color: #2d2d2d !important;
+        }
+
+        /* Category scroll & tab buttons (No border change) */
+        .dark .category-scroll-btn,
+        .dark .category-tabs button:not(.category-active) {
+            background-color: #141414 !important;
+            color: #f2f3f3 !important;
+        }
+
+        /* Card action buttons (Drive, Edit, Delete) */
+        .dark .card-actions > * {
+            background-color: #141414 !important;
+            color: #f2f3f3 !important;
+            border: 2px solid #2d2d2d !important;
+        }
+        
+        .dark .search-input {
+            background-color: #141414 !important;
+            color: #f2f3f3 !important;
+            border-width: 2px !important;
+            border-color: #2d2d2d !important;
+        }
+        .dark .search-input::placeholder {
+            color: #8e8e8f !important;
+        }
+
+        /* Hover states */
+        .dark header .header-action-btn:hover,
+        .dark .category-scroll-btn:hover,
+        .dark .category-tabs button:not(.category-active):hover,
+        .dark .card-actions > *:hover {
+            background-color: #2a2a2a !important; /* Lighter gray for hover */
+        }
+        
+        /* Add border hover to specific elements */
+        .dark header .header-action-btn:hover,
+        .dark .card-actions > *:hover,
+        .dark .search-input:focus {
+             border-color: #3c3c3c !important;
+        }
+
+        /* Restore specific hover text colors */
+        .dark .card-actions button[aria-label="Elimina progetto"]:hover {
+            color: #ef4444 !important; /* Red for delete */
+        }
+        .dark .card-actions button[aria-label="Modifica progetto"]:hover {
+            color: #f2f3f3 !important; /* Ensure edit icon stays light */
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            backdrop-filter: blur(4px);
+        }
+        .modal-content {
+            background: #f5f5f5;
+            padding: 2rem;
+            border-radius: 0.75rem; /* Slightly larger radius */
+            max-width: 550px; /* Wider modal */
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            border: 1px solid #e5e7eb;
+            box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+        }
+        .dark .modal-content {
+            background-color: #141414;
+            border-color: #3c3c3c;
+        }
+        
+        /* Definitive fix for Light Theme text colors */
+        html:not(.dark) .light-theme-text-primary {
+            color: #111827; /* text-gray-900 */
+        }
+        html:not(.dark) .light-theme-text-secondary {
+            color: #374151; /* text-gray-700 */
+        }
+
+        /* Specific hover color for card detail links in light theme */
+        html:not(.dark) .card-detail-link:hover {
+            color: #1f2937 !important; /* text-gray-800 */
+        }
+
+        /* Specific hover color for delete button in light theme */
+        .card-action-delete-hover:hover {
+            color: #dc2626 !important; /* red-600, forced */
+        }
+
+         /* Custom scrollbar for modal */
+        .modal-content::-webkit-scrollbar {
+            width: 8px;
+        }
+        .modal-content::-webkit-scrollbar-track {
+             background: transparent;
+        }
+        .dark .modal-content::-webkit-scrollbar-track {
+            background: #1f1f1f;
+            border-radius: 10px;
+        }
+        .modal-content::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 10px;
+        }
+        .modal-content::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+        .scrollbar-hide {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .main-bg {
+            background-color: #f5f5f5;
+        }
+        .dark .main-bg {
+            background-color: #141414;
+        }
+        
+        /* --- Form Styles for Modal --- */
+        .form-label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem; /* 14px */
+        }
+        .dark .form-label {
+            color: #d1d5db; /* gray-300 */
+        }
+        .form-label span { /* The asterisk */
+            color: #3b82f6; /* blue-500 */
+        }
+        .form-input, .form-select {
+            background-color: #fff;
+            border: 1px solid #d1d5db; /* gray-300 */
+            border-radius: 0.5rem; /* 8px */
+            padding: 0.75rem 1rem;
+            width: 100%;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            font-size: 0.875rem;
+        }
+        .form-input:focus, .form-select:focus {
+            outline: none;
+            border-color: #3b82f6; /* blue-500 */
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+        }
+        .dark .form-input, .dark .form-select {
+            background-color: #1f1f1f; /* dark-card */
+            border-color: #3c3c3c; /* dark-border */
+            color: #e2e8f0; /* slate-200 */
+        }
+        .dark .form-input::placeholder {
+            color: #6b7280; /* gray-500 */
+        }
+        
+        /* Dropdown Menu Fix & Styling */
+        .dropdown-menu {
+            background-color: white;
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            border: 1px solid rgb(243 244 246); /* border-gray-100 */
+            color: #374151; /* gray-700 / default text color */
+        }
+        .dark .dropdown-menu {
+            background-color: #1f1f1f !important; /* dark-card, !important to win specificity war */
+            border: 1px solid #3c3c3c; /* dark-border */
+            color: #e5e7eb; /* gray-200 / default dark text color */
+        }
+        .dropdown-menu button:hover {
+            background-color: #f3f4f6; /* gray-100 */
+        }
+        .dark .dropdown-menu button:hover {
+            background-color: #374151; /* gray-700 */
+        }
+
+        /* Animations for Image Modal */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes scaleIn {
+            from { transform: scale(0.95); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.2s ease-out forwards;
+        }
+        .animate-scale-in {
+            animation: scaleIn 0.2s ease-out forwards;
+        }
+
+        /* Bouncing Dots Animation */
+        @keyframes bounce-wave {
+          0%, 60%, 100% {
+            transform: translateY(0);
+          }
+          30% {
+            transform: translateY(-6px);
+          }
+        }
+        .animate-bounce-wave {
+            animation: bounce-wave 1.4s ease-in-out infinite;
+        }
+
+        /* --- DEFINITIVE UTILITY BUTTONS LIGHT THEME FIX --- */
+        /* This rule forces the correct light theme styles on utility buttons,
+           overriding any conflicting global styles. */
+        html:not(.dark) .utility-button {
+            background-color: #ffffff !important; /* white */
+            color: #1e293b !important; /* slate-800 */
+            border: 1px solid #e5e7eb !important; /* gray-200 */
+        }
+
+        html:not(.dark) .utility-button:hover {
+            background-color: #f3f4f6 !important; /* gray-100 */
+        }
+
+        /* Specifically target the green icon in the 'New Project' button */
+        html:not(.dark) .utility-button-new-project svg {
+            color: #10b981 !important; /* emerald-500 */
+        }
+        
+        /* --- DEFINITIVE UTILITY BUTTONS DARK THEME FIX --- */
+        .dark .utility-button {
+            background-color: #141414 !important;
+            color: #e2e8f0 !important;
+            border-color: #2d2d2d !important;
+            border-width: 2px !important;
+        }
+
+        .dark .utility-button:hover {
+            background-color: #2a2a2a !important;
+        }
+
+        /* Keep icon color green for 'New Project' button in dark mode */
+        .dark .utility-button-new-project svg {
+            color: #10b981 !important; /* emerald-500 */
+        }
+        
+        /* Analytics Dashboard Styles */
+        .kpi-card {
+            background-color: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+            transition: background-color 0.2s ease-in-out;
+        }
+        .kpi-card:hover {
+            background-color: #f9fafb; /* gray-50 */
+        }
+        .dark .kpi-card {
+            background-color: #1f1f1f;
+            border-color: #3c3c3c;
+        }
+        .dark .kpi-card:hover {
+            background-color: #2a2a2a;
+        }
+        .chart-card {
+             background-color: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+        }
+         .dark .chart-card {
+            background-color: #1f1f1f;
+            border-color: #3c3c3c;
+        }
+
+        /* NEW: Analytics Card Styles */
+        .analytics-card {
+            background-color: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out, border-color 0.2s ease-in-out;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            aspect-ratio: 1 / 1;
+        }
+        .analytics-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.07), 0 4px 6px -4px rgb(0 0 0 / 0.07);
+            border-color: #d1d5db; /* gray-300 */
+        }
+        .dark .analytics-card {
+            background-color: #1f1f1f;
+            border-color: #3c3c3c;
+        }
+        .dark .analytics-card:hover {
+             border-color: #4a4a4a;
+        }
+
+        /* NEW: Static Preview Styles */
+        .preview-bar-chart {
+            display: flex;
+            align-items: flex-end;
+            gap: 8px;
+            height: 60px;
+            width: 100%;
+            padding: 0 10px;
+        }
+        .preview-bar {
+            flex-grow: 1;
+            background-color: #e5e7eb;
+            border-radius: 2px;
+        }
+        .dark .preview-bar {
+            background-color: #374151;
+        }
+        .preview-doughnut {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: conic-gradient(#818cf8 0% 25%, #a78bfa 25% 45%, #f472b6 45% 70%, #fb923c 70% 100%);
+        }
+        .preview-table {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .preview-table-row {
+            height: 10px;
+            background-color: #e5e7eb;
+            border-radius: 2px;
+        }
+        .dark .preview-table-row {
+             background-color: #374151;
+        }
+        
+        /* NEW: Larger modal for analytics */
+        .modal-content-lg {
+            max-width: 900px;
+        }
+        
+        /* --- Analytics Dashboard Background --- */
+        .dashboard-view.dark {
+            background-color: #141414; /* fallback */
+            background-image: radial-gradient(ellipse 80% 50% at 50% -20%, rgba(29, 78, 216, 0.15), transparent);
+        }
+        .dashboard-view:not(.dark) {
+            background-color: #f5f5f5; /* fallback */
+            background-image: radial-gradient(ellipse 80% 50% at 50% -20%, rgba(59, 130, 246, 0.07), transparent);
+        }
+        .dashboard-view .main-bg {
+            background-color: transparent;
+        }
+
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.28.0",
+    "chart.js": "https://aistudiocdn.com/chart.js@^4.5.1"
+  }
+}
+</script>
+<script>
+    // Apply theme from localStorage before React mounts to prevent flicker
+    (function() {
+        const theme = localStorage.getItem('theme');
+        // Set dark theme by default, unless it's explicitly set to 'light'
+        if (theme !== 'light') {
+            document.documentElement.classList.add('dark');
+        }
+    })();
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+  </body>
+</html>

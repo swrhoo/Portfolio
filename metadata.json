@@ -1,0 +1,5 @@
+{
+  "name": "Portfolio",
+  "description": "Un portfolio one-page in stile Behance per catalogare e visualizzare progetti grafici, con filtri dinamici e caricamento da un file JSON locale.",
+  "requestFramePermissions": []
+}
